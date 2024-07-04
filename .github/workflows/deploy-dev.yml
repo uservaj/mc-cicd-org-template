@@ -28,30 +28,28 @@ on:
         required: true
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.mule-env }}
+    runs-on: windows-latest
     steps:
-    - uses: actions/download-artifact@v3
-      with:
-        name: app-artifacts
-    - name: Set up JDK 8
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with: 
+        distribution: 'us-east-1'
+
+    - name: Set up Java
       uses: actions/setup-java@v4
       with:
-        java-version: '8'
         distribution: 'temurin'
-        cache: maven
-    
-    - name: Get Jar Full File Name
-      run: |
-        echo "FILE_PATH=$(ls ./target/*.jar)" >> $GITHUB_OUTPUT
-      id: file_name
+        java-version: '8'
 
-    - name: Deploy To specified environment based on profile
-      run: |
-        mvn mule:deploy -e -P ${{ inputs.mule-env }} \
-        -Dmule.key=${{ secrets.SECURE_KEY }} \
-        -DartifactPath=${{ steps.file_name.outputs.FILE_PATH }} \
-        -DconnectedAppClientId=${{ secrets.CONNECTED_APP_CLIENT_ID }} \
-        -DconnectedAppClientSecret=${{ secrets.CONNECTED_APP_CLIENT_SECRET }} \
-        -DorganizationId=${{ secrets.ORG_ID }} \
-        -Denvironment=${{inputs.anypoint_environment}}
+    - name: Deploy to Exchange dev
+      run: mvn deploy --settings .maven/settings.xml
+        
+    - name: Deploy to Cloudhub dev
+      run: mvn deploy -DmuleDeploy 
+          -Den="${{inputs.mule_env}}"
+          -Denvironment="${{inputs.anypoint_environment}}"
+          -Dsecure_key="${{secrets.SECURE_KEY}}"
+          -Dorg_id="${{secrets.ORG_ID}}"
+          -Dapp_name="${{inputs.apiName}}"
+          -Dconnected_app_client_id="${{secrets.CONNECTED_APP_CLIENT_ID}}"
+          -Dconnected_app_secret="${{secrets.CONNECTED_APP_CLIENT_SECRET}}" --settings .maven/settings.xml
