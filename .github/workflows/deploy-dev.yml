@@ -1,50 +1,39 @@
-name: deploy to dev
+name: Deploy to Dev Environment
 
-on: 
+on:
   workflow_call:
-    inputs: 
-      apiName: # Input for the API name
-        description: 'Name of the API' 
-        type: string 
-        required: true 
-      mule_env:
-        description: 'Property value for mule'
+    inputs:
+      environment:
+        required: true
         type: string
-      anypoint_environment:
-        description: 'Anypoint platforms Runtime manager environment'
-        type: string
-    secrets:
-      SECURE_KEY:
-        description: 'Key for Secure properties'
-        required: true
-      ORG_ID:
-        description: 'Anypoint platforms Organization Id or Business group Id'
-        required: true
-      CONNECTED_APP_CLIENT_ID:
-        description: 'Anypoint platforms Connected app client Id'
-        required: true
-      CONNECTED_APP_CLIENT_SECRET:
-        description: 'Anypoint platforms Connected app client secret'
-        required: true
+
 jobs:
   deploy:
     runs-on: windows-latest
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with: 
-        distribution: 'us-east-1'
-        ref: 'main'
-        token: ${{ secrets.GH_PAT }}
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with: 
+          distribution: 'us-east-1'
 
-    - name: Set up Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '8'
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
 
-    - name: Deploy to Exchange dev
-      run: echo "Print" ${{GITHUB_ref}}
-
-     
+      - name: Deploy to Exchange dev
+        run: mvn deploy --settings .maven/settings.xml
+        
+      - name: Deploy to CloudHub dev
+        run: |
+          mvn deploy -DmuleDeploy \
+            -Den="${{ inputs.environment }}" \
+            -Denvironment="${{ inputs.ENVIRONMENT_DEV }}" \
+            -Dsecure_key="${{ secrets.SECURE_KEY }}" \
+            -Dorg_id="${{ secrets.ORG_ID }}" \
+            -Dapp_name="${{ inputs.APP_NAME_DEV }}" \
+            -Dconnected_app_client_id="${{ secrets.CONNECTED_APP_CLIENT_ID }}" \
+            -Dconnected_app_secret="${{ secrets.CONNECTED_APP_CLIENT_SECRET }}" \
+            --settings .maven/settings.xml
