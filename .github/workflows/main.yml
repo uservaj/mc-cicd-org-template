@@ -1,46 +1,21 @@
-name: Dynamic references in workflow files for different environments in your Mule application.
+name: Dynamic references in workflow files for different environments in your Mule application
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       environment:
-        description: 'Environment to deploy'
-        type: choice
         required: true
-        default: 'main'
-        options:
-          - main
-          - dev
-          - uat
-          - qa
+        type: string
 
 jobs:
-  # Job to deploy the application on anypoint platform's Runtime manager
-  
-  deploy-main: # Call deploy-main workflow and deploy the api
+  deploy-api:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.environment == 'main' }}
     steps:
-      - name: Deploy to main environment
-        uses: ./.github/workflows/deploy-main.yml
+      - name: Choose environment
+        run: echo "Deploying to ${{ inputs.environment }} environment"
 
-  deploy-dev: # Call deploy-dev workflow and deploy the api
-    runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.environment == 'dev' }}
-    steps:
-      - name: Deploy to dev environment
-        uses: ./.github/workflows/deploy-dev.yml
-
-  deploy-uat: # Call deploy-uat workflow and deploy the api
-    runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.environment == 'uat' }}
-    steps:
-      - name: Deploy to uat environment
-        uses: ./.github/workflows/deploy-uat.yml
-
-  deploy-qa: # Call deploy-qa workflow and deploy the api
-    runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.environment == 'qa' }}
-    steps:
-      - name: Deploy to qa environment
-        uses: ./.github/workflows/deploy-qa.yml
+      - name: Dispatch deployment job
+        if: ${{ github.event_name == 'workflow_call' }}
+        uses: ./.github/workflows/dispatch-deployment.yml
+        with:
+          environment: ${{ inputs.environment }}
