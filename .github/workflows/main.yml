@@ -7,7 +7,7 @@ on:
         description: 'Environment to deploy'
         type: choice
         required: true
-        default: 'dev'
+        default: 'main'
         options:
           - main
           - dev
