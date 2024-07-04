@@ -1,0 +1,57 @@
+name: deploy to dev
+
+on: 
+  workflow_call:
+    inputs: 
+      apiName: # Input for the API name
+        description: 'Name of the API' 
+        type: string 
+        required: true 
+      mule_env:
+        description: 'Property value for mule'
+        type: string
+      anypoint_environment:
+        description: 'Anypoint platforms Runtime manager environment'
+        type: string
+    secrets:
+      SECURE_KEY:
+        description: 'Key for Secure properties'
+        required: true
+      ORG_ID:
+        description: 'Anypoint platforms Organization Id or Business group Id'
+        required: true
+      CONNECTED_APP_CLIENT_ID:
+        description: 'Anypoint platforms Connected app client Id'
+        required: true
+      CONNECTED_APP_CLIENT_SECRET:
+        description: 'Anypoint platforms Connected app client secret'
+        required: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.mule-env }}
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: app-artifacts
+    - name: Set up JDK 8
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Get Jar Full File Name
+      run: |
+        echo "FILE_PATH=$(ls ./target/*.jar)" >> $GITHUB_OUTPUT
+      id: file_name
+
+    - name: Deploy To specified environment based on profile
+      run: |
+        mvn mule:deploy -e -P ${{ inputs.mule-env }} \
+        -Dmule.key=${{ secrets.SECURE_KEY }} \
+        -DartifactPath=${{ steps.file_name.outputs.FILE_PATH }} \
+        -DconnectedAppClientId=${{ secrets.CONNECTED_APP_CLIENT_ID }} \
+        -DconnectedAppClientSecret=${{ secrets.CONNECTED_APP_CLIENT_SECRET }} \
+        -DorganizationId=${{ secrets.ORG_ID }} \
+        -Denvironment=${{inputs.anypoint_environment}}
