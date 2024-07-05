@@ -11,17 +11,17 @@ jobs:
   deploy-api:
     runs-on: ubuntu-latest
     steps:
-      - name: actions/chechout
+      - name: Checkout repository
         uses: actions/checkout@v4
         
       - name: Choose environment
         run: echo "Deploying to ${{ inputs.environment }} environment"
         
-      - name: print event_name ${{ github.event_name }}
-        run: echo "Deploying to ${{ github.event_name }} name."
+      - name: Print event name
+        run: echo "Deploying to ${{ github.event_name }} event."
         
-      # - name: Dispatch deployment job
-      #   if: ${{ github.event_name == 'push' }}
-      #   uses: ./.github/workflows/dispatch-deployment.yml
-      #   with:
-      #     environment: ${{ inputs.environment }}
+      - name: Dispatch deployment job
+        if: ${{ github.event_name == 'push' }}
+        uses: ./.github/workflows/dispatch-deployment.yml
+        with:
+          environment: ${{ inputs.environment }}
